@@ -12,6 +12,8 @@ const app = express();
 // ── Security ──────────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({ origin: config.clientOrigin, credentials: true }));
+// Trust Render's reverse proxy so req.secure works correctly
+app.set('trust proxy', 1);
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 const authLimiter    = rateLimit({ windowMs: 15*60*1000, max: 20, message: { success: false, message: 'Too many requests.' } });
@@ -24,11 +26,17 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Session ───────────────────────────────────────────────────────────────────
+const isProd = config.nodeEnv === 'production';
 app.use(session({
   secret:            config.sessionSecret,
   resave:            false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, secure: config.nodeEnv === 'production', sameSite: 'lax', maxAge: 7*24*60*60*1000 },
+  cookie: {
+    httpOnly: true,
+    secure:   isProd,           // HTTPS only in production
+    sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-domain (Netlify → Render)
+    maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days
+  },
 }));
 
 // ── Always-available routes ───────────────────────────────────────────────────
