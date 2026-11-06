@@ -2,12 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { apiFetch } from '../lib/api';
 
 export interface AuthUser {
-  id:          string;
-  email:       string;
-  role:        string;
-  username?:   string;
+  id:           string;
+  email:        string;
+  role:         string;
+  name?:        string;
+  username?:    string;
   displayName?: string;
-  avatarUrl?:  string;
+  avatarUrl?:   string;
 }
 
 interface AuthContextValue {

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 
 interface ProfileForm {
   displayName: string;
@@ -21,13 +22,15 @@ const ProfileSettingsPage: React.FC = () => {
     displayName: '', bio: '', avatarUrl: '', skills: '',
     visibility: 'PUBLIC', website: '', twitter: '', linkedin: '', instagram: '',
   });
-  const [loading,  setLoading]  = useState(true);
-  const [saving,   setSaving]   = useState(false);
-  const [success,  setSuccess]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [loading,      setLoading]      = useState(true);
+  const [saving,       setSaving]       = useState(false);
+  const [success,      setSuccess]      = useState(false);
+  const [error,        setError]        = useState('');
+  const [uploadingAvt, setUploadingAvt] = useState(false);
+  const avatarRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch('/api/v1/profile/me', { credentials: 'include' })
+    apiFetch('/api/v1/profile/me')
       .then(r => r.json())
       .then(d => {
         if (d.success) {
@@ -59,9 +62,8 @@ const ProfileSettingsPage: React.FC = () => {
     e.preventDefault();
     if (!form.displayName.trim()) { setError('Display name is required.'); return; }
     setSaving(true);
-    const res = await fetch('/api/v1/profile/me', {
-      method: 'PUT', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await apiFetch('/api/v1/profile/me', {
+      method: 'PUT',
       body: JSON.stringify({
         displayName: form.displayName.trim(),
         bio:         form.bio.trim() || null,
@@ -81,6 +83,17 @@ const ProfileSettingsPage: React.FC = () => {
     setSaving(false);
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5 MB.'); return; }
+    setUploadingAvt(true);
+    const fd = new FormData(); fd.append('file', file);
+    const res = await apiFetch('/api/v1/upload/avatar', { method: 'POST', headers: {}, body: fd });
+    const data = await res.json();
+    if (data.success) setForm(f => ({ ...f, avatarUrl: data.avatarUrl }));
+    else setError(data.message ?? 'Avatar upload failed.');
+    setUploadingAvt(false);
+  };
+
   const inputStyle: React.CSSProperties = {
     padding: '12px 16px', background: 'var(--clr-surface)',
     border: '1.5px solid var(--clr-border)', borderRadius: 'var(--r-md)',
@@ -91,9 +104,9 @@ const ProfileSettingsPage: React.FC = () => {
     <div className="dashboard">
       <aside className="sidebar">
         <p className="sidebar__label">Portfolio</p>
-        <a href="/dashboard"         className="sidebar__link">📊 Overview</a>
-        <a href="/dashboard/add"     className="sidebar__link">➕ Add Video</a>
-        <a href="/dashboard/profile" className="sidebar__link active">👤 Profile</a>
+        <Link to="/dashboard"         className="sidebar__link">📊 Overview</Link>
+        <Link to="/dashboard/add"     className="sidebar__link">➕ Add Video</Link>
+        <Link to="/dashboard/profile" className="sidebar__link active">👤 Profile</Link>
       </aside>
 
       <main className="dashboard__main">
@@ -126,9 +139,22 @@ const ProfileSettingsPage: React.FC = () => {
                 </div>
 
                 <div className="field">
-                  <label htmlFor="ps-avatar">Avatar URL</label>
-                  <input id="ps-avatar" name="avatarUrl" type="url" style={inputStyle} value={form.avatarUrl} onChange={handle} placeholder="https://…" />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-3)' }}>Paste a direct image link (Gravatar, Imgur, etc.)</span>
+                  <label>Avatar photo</label>
+                  <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }}
+                    onChange={e => { if (e.target.files?.[0]) handleAvatarUpload(e.target.files[0]); }} />
+                  <div style={{ display: 'flex', gap: 'var(--sp-md)', alignItems: 'center' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--grad-primary)', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem' }}>
+                      {form.avatarUrl
+                        ? <img src={form.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : (form.displayName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() || '?')}
+                    </div>
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => avatarRef.current?.click()} disabled={uploadingAvt}>
+                      {uploadingAvt ? 'Uploading…' : '📷 Upload photo'}
+                    </button>
+                    {form.avatarUrl && <button type="button" className="btn btn--ghost btn--sm" style={{ color: '#ef4444' }} onClick={() => setForm(f => ({ ...f, avatarUrl: '' }))}>Remove</button>}
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-3)' }}>Or paste a URL below:</span>
+                  <input id="ps-avatar" name="avatarUrl" type="url" style={{ ...inputStyle, marginTop: 6 }} value={form.avatarUrl} onChange={handle} placeholder="https://…" />
                 </div>
 
                 <div className="field">
