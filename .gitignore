@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+# NOTE: .env.production is intentionally NOT ignored — it only contains public API URL
 
 # Dependencies
 node_modules/

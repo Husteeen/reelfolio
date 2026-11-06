@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import { Pool } from 'pg';
 import rateLimit from 'express-rate-limit';
 import { config } from './config/env';
 import healthRouter from './routes/health';
@@ -27,14 +29,23 @@ app.use(express.urlencoded({ extended: true }));
 
 // ── Session ───────────────────────────────────────────────────────────────────
 const isProd = config.nodeEnv === 'production';
+
+const PgSession = connectPgSimple(session);
+const pgPool = config.databaseUrl
+  ? new Pool({ connectionString: config.databaseUrl, ssl: { rejectUnauthorized: false } })
+  : null;
+
 app.use(session({
+  store: pgPool
+    ? new PgSession({ pool: pgPool, createTableIfMissing: true })
+    : undefined, // falls back to MemoryStore in dev without DB
   secret:            config.sessionSecret,
   resave:            false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure:   isProd,           // HTTPS only in production
-    sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-domain (Netlify → Render)
+    sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-domain (Vercel → Render)
     maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days
   },
 }));
