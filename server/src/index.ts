@@ -57,18 +57,22 @@ async function loadDbRoutes() {
   }
 
   try {
-    const [authR, profileR, videosR, categoriesR, reportsR] = await Promise.all([
+    const [authR, profileR, videosR, categoriesR, reportsR, uploadR, analyticsR] = await Promise.all([
       import('./routes/auth').then(m => m.default),
       import('./routes/profile').then(m => m.default),
       import('./routes/videos').then(m => m.default),
       import('./routes/categories').then(m => m.default),
       import('./routes/reports').then(m => m.default),
+      import('./routes/upload').then(m => m.default),
+      import('./routes/analytics').then(m => m.default),
     ]);
     app.use('/api/v1/auth',       authR);
     app.use('/api/v1/profile',    profileR);
     app.use('/api/v1/videos',     videosR);
     app.use('/api/v1/categories', categoriesR);
     app.use('/api/v1/reports',    reportsR);
+    app.use('/api/v1/upload',     uploadR);
+    app.use('/api/v1/analytics',  analyticsR);
     console.log('✅  All DB routes loaded.');
   } catch (err) {
     console.error('❌  Failed to load DB routes — check DATABASE_URL and run: npx prisma generate');

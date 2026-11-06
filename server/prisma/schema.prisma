@@ -65,6 +65,7 @@ model Profile {
   socialLinks Json?      // { twitter, linkedin, instagram, website }
   skills      String[]   @default([])
   visibility  Visibility @default(PUBLIC)
+  viewCount   Int        @default(0)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
