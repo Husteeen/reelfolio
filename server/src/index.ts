@@ -77,12 +77,14 @@ async function loadDbRoutes() {
   } catch (err) {
     console.error('❌  Failed to load DB routes — check DATABASE_URL and run: npx prisma generate');
     const stub = (_req: express.Request, res: express.Response) =>
-      res.status(503).json({ success: false, message: 'Database error. Run: npx prisma generate && npx prisma db push' });
+      res.status(503).json({ success: false, message: 'Database error.' });
     app.use('/api/v1/auth',       stub);
     app.use('/api/v1/profile',    stub);
     app.use('/api/v1/videos',     stub);
     app.use('/api/v1/categories', stub);
     app.use('/api/v1/reports',    stub);
+    app.use('/api/v1/upload',     stub);
+    app.use('/api/v1/analytics',  stub);
   }
 }
 
@@ -95,9 +97,18 @@ loadDbRoutes().then(() => {
     console.log(`    Environment   :  ${config.nodeEnv}`);
     if (!config.databaseUrl) {
       console.log(`\n    👉  Next step: add DATABASE_URL to your .env file`);
-      console.log(`    👉  Then run: npx prisma generate && npx prisma db push && npm run seed`);
+    }
+
+    // ── Keep-alive ping (Render free tier sleeps after 15 min) ───────────────
+    if (config.nodeEnv === 'production') {
+      const selfUrl = process.env.RENDER_EXTERNAL_URL ?? `http://localhost:${config.port}`;
+      setInterval(() => {
+        fetch(`${selfUrl}/api/v1/health`).catch(() => {});
+      }, 14 * 60 * 1000); // every 14 minutes
+      console.log('    ✅  Keep-alive ping active (every 14 min)');
     }
   });
 });
 
 export default app;
+
