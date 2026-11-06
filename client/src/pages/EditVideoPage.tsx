@@ -68,6 +68,8 @@ const EditVideoPage: React.FC = () => {
         <a href="/dashboard"         className="sidebar__link">📊 Overview</a>
         <a href="/dashboard/add"     className="sidebar__link">➕ Add Video</a>
         <a href="/dashboard/profile" className="sidebar__link">👤 Profile</a>
+        <p className="sidebar__label" style={{ marginTop: 'auto' }}>Navigation</p>
+        <a href="/" className="sidebar__link">← Home</a>
       </aside>
 
       <main className="dashboard__main">

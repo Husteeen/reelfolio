@@ -84,6 +84,8 @@ const DashboardPage: React.FC = () => {
         {user?.username && (
           <a href={`/u/${user.username}`} target="_blank" rel="noreferrer" className="sidebar__link">🌐 Public Page</a>
         )}
+        <p className="sidebar__label" style={{ marginTop: 'auto' }}>Navigation</p>
+        <Link to="/" className="sidebar__link">← Home</Link>
       </aside>
 
       <main className="dashboard__main">

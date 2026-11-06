@@ -120,6 +120,8 @@ const AddVideoPage: React.FC = () => {
         <Link to="/dashboard/add"     className="sidebar__link active">➕ Add Video</Link>
         <p className="sidebar__label">Account</p>
         <Link to="/dashboard/profile" className="sidebar__link">👤 Profile Settings</Link>
+        <p className="sidebar__label" style={{ marginTop: 'auto' }}>Navigation</p>
+        <Link to="/" className="sidebar__link">← Home</Link>
       </aside>
 
       <main className="dashboard__main">

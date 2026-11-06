@@ -107,6 +107,8 @@ const ProfileSettingsPage: React.FC = () => {
         <Link to="/dashboard"         className="sidebar__link">📊 Overview</Link>
         <Link to="/dashboard/add"     className="sidebar__link">➕ Add Video</Link>
         <Link to="/dashboard/profile" className="sidebar__link active">👤 Profile</Link>
+        <p className="sidebar__label" style={{ marginTop: 'auto' }}>Navigation</p>
+        <Link to="/" className="sidebar__link">← Home</Link>
       </aside>
 
       <main className="dashboard__main">
