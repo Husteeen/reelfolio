@@ -36,18 +36,25 @@ router.post('/video', requireAuth, upload.single('file'), async (req: Request, r
   try {
     const result = await new Promise<Record<string, unknown>>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { resource_type: 'video', folder: `reelfolio/${userId}`, eager: [{ format: 'mp4', quality: 'auto' }], eager_async: true },
-        (err: Error | undefined, res: Record<string, unknown> | undefined) => { if (err || !res) reject(err); else resolve(res); }
+        { resource_type: 'video', folder: `reelfolio/${userId}` },
+        (err: unknown, res: Record<string, unknown> | undefined) => {
+          if (err || !res) reject(err ?? new Error('Upload failed'));
+          else resolve(res);
+        }
       );
       bufferToStream(file.buffer).pipe(stream);
     });
 
     const url = result['secure_url'] as string;
+    // Generate a thumbnail by replacing video extension with .jpg using Cloudinary's poster frame
+    const thumbnailUrl = url.replace(/\.(mp4|webm|mov|avi)$/i, '.jpg')
+                            .replace('/video/upload/', '/video/upload/so_0,w_800,h_450,c_fill/');
+
     res.status(201).json({
       success:      true,
       url,
       publicId:     result['public_id'],
-      thumbnailUrl: url.replace('/upload/', '/upload/so_0,w_800,h_450,c_fill,f_jpg/'),
+      thumbnailUrl,
       duration:     result['duration'] ?? null,
     });
   } catch (err) {
